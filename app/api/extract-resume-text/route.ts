@@ -36,8 +36,7 @@ if (typeof globalThis.DOMMatrix === 'undefined') {
 async function extractPdfText(buffer: Buffer): Promise<string> {
   // Use pdfjs-dist legacy build — no worker needed, works in serverless
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-  // @ts-expect-error — workerSrc must be disabled for Node.js/serverless
-  pdfjs.GlobalWorkerOptions.workerSrc = false
+  pdfjs.GlobalWorkerOptions.workerSrc = ''
 
   const data  = new Uint8Array(buffer)
   const doc   = await pdfjs.getDocument({ data, disableRange: true, disableStream: true }).promise
