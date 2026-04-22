@@ -179,7 +179,7 @@ export default async function DashboardPage() {
       <div className="dash-space-lg" />
       <div className="dash-section-label">Get started</div>
       <div className="dash-space-sm" />
-      <div className="dash-cards" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+      <div className="dash-cards dash-cards--four">
         {quickActions.map(a => (
           <div key={a.label} className="dash-card">
             <div className="dash-card-icon"><a.icon width={18} height={18} /></div>

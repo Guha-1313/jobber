@@ -23,9 +23,11 @@ const navItems = [
 interface SidebarProps {
   userName: string
   userEmail: string
+  isOpen?: boolean
+  onClose?: () => void
 }
 
-export function Sidebar({ userName, userEmail }: SidebarProps) {
+export function Sidebar({ userName, userEmail, isOpen, onClose }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -43,7 +45,7 @@ export function Sidebar({ userName, userEmail }: SidebarProps) {
     .toUpperCase() || 'U'
 
   return (
-    <aside className="dash-sidebar">
+    <aside className={`dash-sidebar${isOpen ? ' mobile-open' : ''}`}>
       {/* Logo */}
       <div className="dash-logo">
         Jobber<span className="dash-logo-dot">.</span>
@@ -63,6 +65,7 @@ export function Sidebar({ userName, userEmail }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={`dash-nav-item${isActive ? ' active' : ''}`}
+              onClick={onClose}
             >
               <item.icon className="dash-nav-icon" width={16} height={16} />
               {item.label}

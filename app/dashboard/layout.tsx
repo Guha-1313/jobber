@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { DashboardClient } from '@/components/dashboard/DashboardClient'
-import { Sidebar } from '@/components/layout/Sidebar'
-import { TopHeader } from '@/components/layout/TopHeader'
+import { DashboardShell } from '@/components/layout/DashboardShell'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
@@ -28,13 +27,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <canvas className="particles" id="pcanvas" />
       <div className="cursor-ring" id="ring" />
       <div className="cursor-core" id="core" />
-      <div className="dash-wrap">
-        <Sidebar userName={displayName} userEmail={email} />
-        <div className="dash-main">
-          <TopHeader userName={displayName} />
-          <main className="dash-content">{children}</main>
-        </div>
-      </div>
+      <DashboardShell userName={displayName} userEmail={email}>
+        {children}
+      </DashboardShell>
     </>
   )
 }

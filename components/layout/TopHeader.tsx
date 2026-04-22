@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { Bell } from 'lucide-react'
+import { Bell, Menu } from 'lucide-react'
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Overview',
@@ -13,9 +13,10 @@ const pageTitles: Record<string, string> = {
 
 interface TopHeaderProps {
   userName: string
+  onMenuToggle: () => void
 }
 
-export function TopHeader({ userName }: TopHeaderProps) {
+export function TopHeader({ userName, onMenuToggle }: TopHeaderProps) {
   const pathname = usePathname()
   const title = pageTitles[pathname] ?? 'Dashboard'
 
@@ -28,8 +29,13 @@ export function TopHeader({ userName }: TopHeaderProps) {
 
   return (
     <header className="dash-header">
-      <div className="dash-header-title">
-        <span>/</span>{title.toUpperCase()}
+      <div className="dash-header-left">
+        <button aria-label="Open menu" className="dash-menu-btn" onClick={onMenuToggle}>
+          <Menu width={18} height={18} />
+        </button>
+        <div className="dash-header-title">
+          <span>/</span>{title.toUpperCase()}
+        </div>
       </div>
 
       <div className="dash-header-actions">
