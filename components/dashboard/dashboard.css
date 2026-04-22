@@ -1932,3 +1932,55 @@ a.dash-check-label:hover { color: var(--d-blue); }
   border: 1px solid rgba(239, 68, 68, 0.15);
   opacity: 0.8;
 }
+
+/* ── Cursor ── */
+html.dashboard-active body { cursor: none; }
+
+canvas.particles {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+}
+
+.cursor-core {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--d-blue);
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 10000;
+  mix-blend-mode: screen;
+  transition: width 0.18s, height 0.18s, background 0.2s;
+}
+
+.cursor-core.hover {
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: 1px solid var(--d-blue);
+  box-shadow: 0 0 30px var(--d-blue);
+}
+
+.cursor-ring {
+  position: fixed;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(30, 107, 255, 0.35);
+  border-radius: 50%;
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: screen;
+}
+
+@media (hover: none), (max-width: 900px) {
+  html.dashboard-active body { cursor: auto; }
+  canvas.particles, .cursor-core, .cursor-ring { display: none; }
+}

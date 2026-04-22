@@ -25,6 +25,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <>
       <DashboardClient />
+      <canvas className="particles" id="pcanvas" />
+      <div className="cursor-ring" id="ring" />
+      <div className="cursor-core" id="core" />
       <div className="dash-wrap">
         <Sidebar userName={displayName} userEmail={email} />
         <div className="dash-main">
