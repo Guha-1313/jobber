@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 
 type ExtractedJob = {
   title:        string
@@ -259,6 +260,10 @@ function sourceFromUrl(url: string): string {
 // ── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   let url: string
   try {
     const body = await req.json() as { url?: unknown }

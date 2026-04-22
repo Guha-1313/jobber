@@ -19,6 +19,21 @@ export async function POST(req: NextRequest) {
 
   if (!jobId) return NextResponse.json({ error: 'job_id is required' }, { status: 400 })
 
+  // Rate limit: 10 cover letters per user per 24 hours
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  const { count: usageCount } = await supabase
+    .from('generated_documents')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .gte('created_at', since)
+
+  if ((usageCount ?? 0) >= 10) {
+    return NextResponse.json(
+      { error: 'Daily limit reached — you can generate up to 10 cover letters per day. Try again tomorrow.' },
+      { status: 429 },
+    )
+  }
+
   // Fetch job — verify it belongs to this user
   const { data: job, error: jobErr } = await supabase
     .from('jobs')
