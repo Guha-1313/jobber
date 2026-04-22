@@ -49,8 +49,16 @@ export type JobMatch = {
   created_at: string
 }
 
+export type JobAnalysis = {
+  employment_type: 'full-time' | 'part-time' | 'internship' | 'contract' | 'unknown'
+  sponsorship:     'yes' | 'no' | 'unknown'
+  required_skills: string[]
+  matched_skills:  string[]
+  missing_skills:  string[]
+}
+
 export type JobWithMatch = Job & {
-  match: { score: number; explanation: string | null } | null
+  match: { score: number; explanation: string | null; analysis: JobAnalysis | null } | null
 }
 
 export type GeneratedDocument = {

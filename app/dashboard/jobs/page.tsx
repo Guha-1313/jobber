@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { JobsClient } from './JobsClient'
-import type { JobPreferences, JobWithMatch, Resume } from '@/lib/types'
+import type { JobAnalysis, JobPreferences, JobWithMatch, Resume } from '@/lib/types'
 
 export default async function JobsPage() {
   const supabase = createClient()
@@ -14,13 +14,14 @@ export default async function JobsPage() {
   // Fetch jobs with their latest match score
   const { data: jobRows } = await supabase
     .from('jobs')
-    .select('*, job_matches(score, explanation)')
+    .select('*, job_matches(score, explanation, analysis)')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
   const jobs: JobWithMatch[] = (jobRows ?? []).map(row => {
-    const matches = (row.job_matches as { score: number; explanation: string | null }[]) ?? []
-    const match = matches[0] ?? null
+    const matches = (row.job_matches as { score: number; explanation: string | null; analysis: JobAnalysis | null }[]) ?? []
+    const raw = matches[0] ?? null
+    const match = raw ? { score: raw.score, explanation: raw.explanation, analysis: raw.analysis ?? null } : null
     const { job_matches: _jm, ...jobFields } = row
     void _jm
     return { ...jobFields, match }

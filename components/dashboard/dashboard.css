@@ -1840,3 +1840,95 @@ a.dash-check-label:hover { color: var(--d-blue); }
   margin: 0;
   min-height: 1em;
 }
+
+/* ── Job Analysis ─────────────────────────────────────────────────────────── */
+
+.dash-analysis-loading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--d-fg-dim);
+  font-family: var(--font-jetbrains-mono), monospace;
+  letter-spacing: 0.06em;
+  margin: 8px 0 4px;
+  opacity: 0.7;
+}
+
+.dash-analysis {
+  margin: 10px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dash-analysis-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dash-analysis-badge {
+  font-size: 10px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  opacity: 0.85;
+}
+
+.dash-analysis-badge.sponsorship-yes {
+  color: var(--d-green);
+  border-color: var(--d-green);
+  background: rgba(34, 197, 94, 0.06);
+}
+
+.dash-analysis-badge.sponsorship-no {
+  color: var(--d-red);
+  border-color: var(--d-red);
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.dash-skills {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dash-skills-label {
+  font-size: 10px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--d-fg-dim);
+  opacity: 0.7;
+}
+
+.dash-skills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.dash-skill {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  letter-spacing: 0.03em;
+}
+
+.dash-skill.matched {
+  color: var(--d-green);
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.dash-skill.missing {
+  color: var(--d-fg-dim);
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  opacity: 0.8;
+}

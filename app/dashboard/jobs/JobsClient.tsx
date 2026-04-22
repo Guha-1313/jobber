@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { scoreJob, scoreClass } from '@/lib/scoring/job-score'
-import type { Job, JobPreferences, Resume, JobWithMatch } from '@/lib/types'
+import type { Job, JobAnalysis, JobPreferences, Resume, JobWithMatch } from '@/lib/types'
 
 // ── Constants ───────────────────────────────────────────────────────────────
 
@@ -46,8 +46,17 @@ function ScoreBadge({ score }: { score: number | null | undefined }) {
 
 // ── Job card ─────────────────────────────────────────────────────────────────
 
+const EMPLOYMENT_COLORS: Record<string, string> = {
+  'full-time':  'var(--d-blue)',
+  'part-time':  '#f59e0b',
+  'internship': '#a78bfa',
+  'contract':   '#94a3b8',
+}
+
 interface JobCardProps {
   job:             JobWithMatch
+  analysis:        JobAnalysis | null
+  isAnalyzing:     boolean
   onEdit:          () => void
   onDeleteClick:   () => void
   onDeleteConfirm: () => void
@@ -60,7 +69,8 @@ interface JobCardProps {
 }
 
 function JobCard({
-  job, onEdit, onDeleteClick, onDeleteConfirm, onDeleteCancel, confirmDelete,
+  job, analysis, isAnalyzing,
+  onEdit, onDeleteClick, onDeleteConfirm, onDeleteCancel, confirmDelete,
   hasLetter, isGenerating, generateError, onGenerate,
 }: JobCardProps) {
   const sc = scoreClass(job.match?.score)
@@ -112,6 +122,50 @@ function JobCard({
           </span>
         )}
       </div>
+
+      {/* AI analysis */}
+      {isAnalyzing && !analysis && (
+        <div className="dash-analysis-loading">
+          <Loader2 width={11} height={11} className="dash-spin" />
+          Analyzing job…
+        </div>
+      )}
+      {analysis && (
+        <div className="dash-analysis">
+          {/* Employment type + sponsorship */}
+          <div className="dash-analysis-badges">
+            {analysis.employment_type !== 'unknown' && (
+              <span
+                className="dash-analysis-badge"
+                style={{ color: EMPLOYMENT_COLORS[analysis.employment_type] ?? 'var(--d-fg-dim)', borderColor: EMPLOYMENT_COLORS[analysis.employment_type] ?? 'var(--d-fg-dim)' }}
+              >
+                {analysis.employment_type}
+              </span>
+            )}
+            {analysis.sponsorship === 'yes' && (
+              <span className="dash-analysis-badge sponsorship-yes">Sponsors visa ✓</span>
+            )}
+            {analysis.sponsorship === 'no' && (
+              <span className="dash-analysis-badge sponsorship-no">No sponsorship</span>
+            )}
+          </div>
+
+          {/* Skills */}
+          {(analysis.matched_skills.length > 0 || analysis.missing_skills.length > 0) && (
+            <div className="dash-skills">
+              <div className="dash-skills-label">Skills match</div>
+              <div className="dash-skills-row">
+                {analysis.matched_skills.slice(0, 6).map(s => (
+                  <span key={s} className="dash-skill matched">✓ {s}</span>
+                ))}
+                {analysis.missing_skills.slice(0, 4).map(s => (
+                  <span key={s} className="dash-skill missing">✗ {s}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Match explanation */}
       {job.match?.explanation && (
@@ -370,9 +424,35 @@ export function JobsClient({ userId, initialJobs, preferences, resume, initialLe
   const [generatingId, setGeneratingId]   = useState<string | null>(null)
   const [generateErrors, setGenerateErrors] = useState<Record<string, string>>({})
 
+  // Analysis state — seeded from DB, updated after each job save
+  const [analysisMap, setAnalysisMap]   = useState<Record<string, JobAnalysis>>(() => {
+    const m: Record<string, JobAnalysis> = {}
+    for (const j of initialJobs) {
+      if (j.match?.analysis) m[j.id] = j.match.analysis
+    }
+    return m
+  })
+  const [analyzingIds, setAnalyzingIds] = useState<Set<string>>(new Set())
+
   // Filtered view
   const visibleJobs =
     filter === 'all' ? jobs : jobs.filter(j => j.status === filter)
+
+  // Run AI analysis for a job (fire after save — non-blocking)
+  const triggerAnalysis = async (jobId: string) => {
+    setAnalyzingIds(prev => new Set(Array.from(prev).concat(jobId)))
+    try {
+      const res  = await fetch('/api/analyze-job', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ job_id: jobId }),
+      })
+      const json = await res.json() as { data?: JobAnalysis }
+      if (json.data) setAnalysisMap(prev => ({ ...prev, [jobId]: json.data! }))
+    } finally {
+      setAnalyzingIds(prev => { const s = new Set(prev); s.delete(jobId); return s })
+    }
+  }
 
   // Generate cover letter for a job
   const generateLetter = async (jobId: string) => {
@@ -541,7 +621,7 @@ export function JobsClient({ userId, initialJobs, preferences, resume, initialLe
           .insert({ user_id: userId, job_id: savedJob.id, score, explanation })
       }
 
-      match = { score, explanation }
+      match = { score, explanation, analysis: null }
     }
 
     if (editingJob) {
@@ -554,6 +634,9 @@ export function JobsClient({ userId, initialJobs, preferences, resume, initialLe
 
     closeForm()
     router.refresh()
+
+    // Fire-and-forget: analyze job in background after form closes
+    if (savedJob) triggerAnalysis(savedJob.id)
   }
 
   const deleteJob = async (jobId: string) => {
@@ -592,7 +675,7 @@ export function JobsClient({ userId, initialJobs, preferences, resume, initialLe
           .insert({ user_id: userId, job_id: job.id, score, explanation })
       }
 
-      updated.push({ ...job, match: { score, explanation } })
+      updated.push({ ...job, match: { score, explanation, analysis: analysisMap[job.id] ?? null } })
     }
 
     setJobs(updated)
@@ -729,6 +812,8 @@ export function JobsClient({ userId, initialJobs, preferences, resume, initialLe
             <JobCard
               key={job.id}
               job={job}
+              analysis={analysisMap[job.id] ?? null}
+              isAnalyzing={analyzingIds.has(job.id)}
               onEdit={() => openEdit(job)}
               onDeleteClick={() => setDeleteId(job.id)}
               onDeleteConfirm={() => deleteJob(job.id)}
