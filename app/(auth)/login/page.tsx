@@ -14,6 +14,16 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null)
+
+  async function handleOAuth(provider: 'google' | 'github') {
+    setOauthLoading(provider)
+    const supabase = createClient()
+    await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    })
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -197,16 +207,30 @@ export default function LoginPage() {
             <div className="divider">or continue with</div>
 
             <div className="oauth">
-              <button type="button" data-hover="">
-                <svg width="16" height="16" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M21.35 11.1H12v2.8h5.35c-.22 1.4-1.66 4.12-5.35 4.12-3.22 0-5.85-2.66-5.85-5.95s2.63-5.95 5.85-5.95c1.83 0 3.06.78 3.77 1.45l2.57-2.48C16.79 3.64 14.6 2.7 12 2.7 6.94 2.7 2.85 6.79 2.85 12s4.09 9.3 9.15 9.3c5.28 0 8.78-3.71 8.78-8.93 0-.6-.07-1.06-.14-1.5z" />
-                </svg>
+              <button
+                type="button"
+                data-hover=""
+                disabled={!!oauthLoading}
+                onClick={() => handleOAuth('google')}
+              >
+                {oauthLoading === 'google' ? <span className="spinner" /> : (
+                  <svg width="16" height="16" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M21.35 11.1H12v2.8h5.35c-.22 1.4-1.66 4.12-5.35 4.12-3.22 0-5.85-2.66-5.85-5.95s2.63-5.95 5.85-5.95c1.83 0 3.06.78 3.77 1.45l2.57-2.48C16.79 3.64 14.6 2.7 12 2.7 6.94 2.7 2.85 6.79 2.85 12s4.09 9.3 9.15 9.3c5.28 0 8.78-3.71 8.78-8.93 0-.6-.07-1.06-.14-1.5z" />
+                  </svg>
+                )}
                 Google
               </button>
-              <button type="button" data-hover="">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 .3a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.8.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 016 0C17 4 18 4.3 18 4.3c.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.5.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0012 .3z" />
-                </svg>
+              <button
+                type="button"
+                data-hover=""
+                disabled={!!oauthLoading}
+                onClick={() => handleOAuth('github')}
+              >
+                {oauthLoading === 'github' ? <span className="spinner" /> : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 .3a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.8.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 016 0C17 4 18 4.3 18 4.3c.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.5.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0012 .3z" />
+                  </svg>
+                )}
                 GitHub
               </button>
             </div>
