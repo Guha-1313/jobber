@@ -9,7 +9,8 @@ const SYSTEM_PROMPT = `You are a professional cover letter writer. Write focused
 - Stay concise — 3 tight paragraphs, under 320 words total
 - Use a professional but direct tone — not stiff or overly formal
 - Close with a clear, confident call to action
-- Sign off with "Sincerely," on its own line`
+- Sign off with "Sincerely," on its own line
+- NEVER mention citizenship, visa status, or work authorization unless the candidate's work authorization is explicitly provided — do not assume or infer it`
 
 function buildUserPrompt(
   job: Job,
@@ -29,6 +30,7 @@ function buildUserPrompt(
     if (preferences.preferred_titles?.length) prefs.push(`Target roles: ${preferences.preferred_titles.join(', ')}`)
     if (preferences.work_mode)               prefs.push(`Work mode preference: ${preferences.work_mode}`)
     if (preferences.years_experience)        prefs.push(`Years of experience: ${preferences.years_experience}`)
+    if (preferences.work_authorization)      prefs.push(`Work authorization: ${preferences.work_authorization}`)
     if (prefs.length) parts.push(`CANDIDATE PREFERENCES:\n${prefs.join('\n')}`)
   }
 
