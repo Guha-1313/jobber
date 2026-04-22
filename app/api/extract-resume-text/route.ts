@@ -2,6 +2,37 @@ import { NextRequest, NextResponse } from 'next/server'
 import mammoth from 'mammoth'
 import { createClient } from '@/lib/supabase/server'
 
+// pdfjs-dist uses DOMMatrix for text transforms — polyfill for Node.js / Vercel serverless
+if (typeof globalThis.DOMMatrix === 'undefined') {
+  class DOMMatrixPolyfill {
+    a = 1; b = 0; c = 0; d = 1; e = 0; f = 0
+    constructor(init?: number[] | string) {
+      if (Array.isArray(init) && init.length >= 6) {
+        [this.a, this.b, this.c, this.d, this.e, this.f] = init
+      }
+    }
+    transformPoint(p: { x?: number; y?: number }) {
+      const x = p.x ?? 0, y = p.y ?? 0
+      return { x: this.a * x + this.c * y + this.e, y: this.b * x + this.d * y + this.f, z: 0, w: 1 }
+    }
+    multiply(m: { a:number; b:number; c:number; d:number; e:number; f:number }) {
+      return new DOMMatrixPolyfill([
+        this.a * m.a + this.c * m.b, this.b * m.a + this.d * m.b,
+        this.a * m.c + this.c * m.d, this.b * m.c + this.d * m.d,
+        this.a * m.e + this.c * m.f + this.e, this.b * m.e + this.d * m.f + this.f,
+      ])
+    }
+    scale(sx: number, sy: number) {
+      return new DOMMatrixPolyfill([this.a * sx, this.b * sx, this.c * sy, this.d * sy, this.e, this.f])
+    }
+    translate(tx: number, ty: number) {
+      return new DOMMatrixPolyfill([this.a, this.b, this.c, this.d, this.a * tx + this.c * ty + this.e, this.b * tx + this.d * ty + this.f])
+    }
+  }
+  // @ts-expect-error — polyfill for serverless
+  globalThis.DOMMatrix = DOMMatrixPolyfill
+}
+
 async function extractPdfText(buffer: Buffer): Promise<string> {
   // Use pdfjs-dist legacy build — no worker needed, works in serverless
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
