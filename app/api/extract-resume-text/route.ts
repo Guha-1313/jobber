@@ -1,7 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PDFParse } from 'pdf-parse'
 import mammoth from 'mammoth'
 import { createClient } from '@/lib/supabase/server'
+
+async function extractPdfText(buffer: Buffer): Promise<string> {
+  // Use pdfjs-dist legacy build — no worker needed, works in serverless
+  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
+  // @ts-expect-error — workerSrc must be disabled for Node.js/serverless
+  pdfjs.GlobalWorkerOptions.workerSrc = false
+
+  const data  = new Uint8Array(buffer)
+  const doc   = await pdfjs.getDocument({ data, disableRange: true, disableStream: true }).promise
+  const pages: string[] = []
+
+  for (let i = 1; i <= doc.numPages; i++) {
+    const page    = await doc.getPage(i)
+    const content = await page.getTextContent()
+    const lines   = content.items
+      .filter(item => 'str' in item)
+      .map(item => (item as { str: string }).str)
+      .join(' ')
+    pages.push(lines)
+  }
+
+  return pages.join('\n\n')
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,23 +47,17 @@ async function handleExtract(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid form data' }, { status: 400 })
   }
 
-  if (!file) {
-    return NextResponse.json({ error: 'No file provided' }, { status: 400 })
-  }
+  if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
 
   const buffer = Buffer.from(await file.arrayBuffer())
   let text = ''
 
   if (file.type === 'application/pdf') {
-    const parser = new PDFParse({ data: buffer })
     try {
-      const result = await parser.getText()
-      text = result.text
+      text = await extractPdfText(buffer)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
       return NextResponse.json({ error: `PDF parse failed: ${msg}` }, { status: 422 })
-    } finally {
-      await parser.destroy()
     }
   } else if (
     file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -57,7 +73,6 @@ async function handleExtract(req: NextRequest) {
     return NextResponse.json({ error: 'Unsupported file type — upload PDF or DOCX' }, { status: 400 })
   }
 
-  // Clean up excessive whitespace while preserving meaningful line breaks
   const cleaned = text
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
